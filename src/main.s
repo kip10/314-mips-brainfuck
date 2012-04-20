@@ -222,7 +222,6 @@ read_error:
 	
 # start the execution of the brainfuck program
 start_execution:
-	jal	print_in
     la $v0, instr
     la $v1, data
     
@@ -275,7 +274,7 @@ get_in:
 	move	$t7, $v0	#Temporarily store $v0
 	li	$v0, 12		#sysfunc to read character
 	syscall			#Character will be stored into $v0
-	sb	0($s0), $v0	#Store $v0 into current data location
+	sb	0($a1), $v0	#Store $v0 into current data location
 	move	$v0, $t7	#Restore $v0
 	j	bf_nop		#NOP command; increment instr pointer
 
@@ -283,7 +282,7 @@ print_out:
 	move	$t7, $v0 	#Temporarily store $v0
 	move	$t8, $a0 	#Temporarily story $a0
 	li	$v0, 11		#sysfunc to print character
-	lb	$a0, 0($s0) 	#Load the data to print
+	lb	$a0, 0($a1) 	#Load the data to print
 	syscall
 	move	$v0, $t7 	#Restore $v0
 	move	$a0, $t8 	#Restore $a0
