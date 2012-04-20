@@ -18,12 +18,13 @@ request_file_text:  .asciiz "Enter a brainfuck file path: "
 file_open_error_text:  .asciiz "ERROR: There was a problem opening the requested file"
 file_read_error_text:  .asciiz "ERROR: There was a problem reading the requested file"
 
-the_file:  .asciiz "/Users/mattbierner/Desktop/314-mips-brainfuck/src/hello.bf"
+the_file:  .asciiz "/Users/Kyle/Desktop/hello.bf"
 
 
 file:   .space 256 # Holds the file name
 data:   .space 4096 # Holds the brainfuck data 
-instr:  .space 4096 # Holds the program instructions 
+instr:  .space 4096 # Holds the program instructions
+newline:	.asciiz	" ENDLINE \n" 
 
 
 # A jump table used to look up instruction functions
@@ -72,9 +73,9 @@ instr_table:
 .word bf_nop # ) 41
 .word bf_nop # * 42
 .word bf_nop # + 43
-.word bf_nop # , 44
+.word print_out # , 44
 .word bf_nop # - 45
-.word bf_nop # . 46
+.word get_in # . 46
 .word bf_nop # / 47
 .word bf_nop # 0 48
 .word bf_nop # 1 49
@@ -183,7 +184,6 @@ instr_table:
     li $a1, 256
     syscall
     
-    
 # Open file
     # Open the file, save file descriptor in $s0
     li $v0, 13
@@ -219,9 +219,10 @@ read_error:
     li $v0, 4
     syscall 
     j exit # and exit
-
+	
 # start the execution of the brainfuck program
 start_execution:
+	jal	print_in
     la $v0, instr
     la $v1, data
     
@@ -245,6 +246,9 @@ run_loop:
 
 exit:
     #Usual stuff at the end of the main
+	la	$a0, data
+	li	$v0, 4
+	syscall
 	addu	$ra, $0, $s7	#restore the return address
 	jr	$ra		#return to the main program
 	add	$0, $0, $0	#nop
@@ -267,14 +271,20 @@ bf_nop:
     move $v1, $a1 # copy data pointer
     jr $ra
 
+get_in:	
+	move	$t7, $v0	#Temporarily store $v0
+	li	$v0, 12		#sysfunc to read character
+	syscall			#Character will be stored into $v0
+	sb	0($s0), $v0	#Store $v0 into current data location
+	move	$v0, $t7	#Restore $v0
+	j	bf_nop		#NOP command; increment instr pointer
 
-
-
-
-
-
-
-
-
-
-
+print_out:
+	move	$t7, $v0 	#Temporarily store $v0
+	move	$t8, $a0 	#Temporarily story $a0
+	li	$v0, 11		#sysfunc to print character
+	lb	$a0, 0($s0) 	#Load the data to print
+	syscall
+	move	$v0, $t7 	#Restore $v0
+	move	$a0, $t8 	#Restore $a0
+	j	bf_nop		#NOP command; increment instr pointer
